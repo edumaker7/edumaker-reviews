@@ -14,6 +14,8 @@
  *   data-cover="card"      카드 대표 이미지를 카드뉴스로 (기본: 현장 사진)
  *   data-title="수업 후기"  위젯 위에 제목 표시
  *   data-columns="3"       PC 에서 한 줄 개수 (기본 3)
+ *   data-group="false"     분류별 묶음(학생교육 후기 / 기업·성인교육 후기 / 교사연수 후기) 끄기
+ *                          (기본: 후기 페이지는 묶음, data-more-url 을 쓴 메인용은 최신순 한 줄)
  */
 (function () {
   "use strict";
@@ -57,6 +59,14 @@
     ".go{margin-top:auto;padding-top:6px;font-size:14px;font-weight:700;color:#1F7A45}",
     ".more{display:block;margin:28px auto 0;font:inherit;font-size:15px;font-weight:700;padding:12px 30px;border-radius:999px;border:1.5px solid #1F7A45;background:#fff;color:#1F7A45;cursor:pointer;text-decoration:none;text-align:center;width:max-content}",
     ".more:hover{background:#1F7A45;color:#fff}",
+    ".grp{margin:0 0 44px}",
+    ".grp:last-child{margin-bottom:0}",
+    ".ghead{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding:0 0 12px;border-bottom:2px solid var(--gc,#1F7A45)}",
+    ".gbar{width:6px;height:22px;border-radius:3px;background:var(--gc,#1F7A45)}",
+    ".gtitle{font-size:21px;font-weight:800;margin:0;letter-spacing:-.02em;color:#1f2329}",
+    ".gnum{font-size:14px;font-weight:700;color:var(--gc,#1F7A45);background:var(--gb,#E8F5EC);padding:2px 10px;border-radius:999px}",
+    ".grp .more{margin-top:20px}",
+    "@media(max-width:560px){.gtitle{font-size:18px}.grp{margin-bottom:34px}}",
     ".empty{padding:48px 0;text-align:center;color:#7a818c}",
     ".sk{border-radius:16px;background:linear-gradient(90deg,#f2f4f6 25%,#e9ecef 37%,#f2f4f6 63%);background-size:400% 100%;animation:sh 1.4s ease infinite;aspect-ratio:3/4}",
     "@keyframes sh{0%{background-position:100% 50%}100%{background-position:0 50%}}"
@@ -211,16 +221,33 @@
     var moreUrl = ds.moreUrl || "";
     var cover = ds.cover || "photo";
     var cols = parseInt(ds.columns || "3", 10) || 3;
+    var group = ds.group ? ds.group !== "false" : !moreUrl;
+    // 메인용 위젯(더 보기 → /review)이 바로 그 후기 페이지에 같이 들어가 있으면 숨김 (중복 방지)
+    if (moreUrl) {
+      try {
+        var target = new URL(moreUrl, location.href);
+        if (target.host === location.host && target.pathname.replace(/\/+$/, "") === location.pathname.replace(/\/+$/, "")) {
+          host.style.display = "none";
+          return;
+        }
+      } catch (e) { /* 무시 */ }
+    }
     var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
-    var state = { sec: ds.section || "", shown: limit, all: [] };
+    var state = { sec: ds.section || "", shown: limit, all: [], gshown: {} };
     var blogHome = "https://blog.naver.com/edumaker07";
 
     root.innerHTML = "<style>" + CSS + "</style>" +
       '<div class="wrap" style="--cols:' + cols + '">' +
       '<div class="head">' + (ds.title ? '<h2 class="title">' + esc(ds.title) + "</h2>" : "<span></span>") + '<div class="chips"></div></div>' +
-      '<div class="grid">' + new Array(Math.min(limit, cols)).join(".").split(".").map(function () { return '<div class="sk"></div>'; }).join("") + "</div>" +
+      '<div class="list"><div class="grid">' + new Array(Math.min(limit, cols) + 1).join(".").split(".").slice(1).map(function () { return '<div class="sk"></div>'; }).join("") + "</div></div>" +
       '<div class="foot"></div></div>';
-    var grid = root.querySelector(".grid"), chips = root.querySelector(".chips"), foot = root.querySelector(".foot");
+    var box = root.querySelector(".list"), chips = root.querySelector(".chips"), foot = root.querySelector(".foot");
+    var ORDER = ["학생교육", "성인교육", "교사강사연수"];
+    function secRank(s) { var i = ORDER.indexOf(s); return i < 0 ? 99 : i; }
+    function labelOf(s) {
+      var r = state.all.filter(function (x) { return x.section === s; })[0];
+      return (r && r.label) || FALLBACK_LABEL[s] || s;
+    }
 
     function list() { return state.all.filter(function (r) { return !state.sec || r.section === state.sec; }); }
 
@@ -237,37 +264,68 @@
         return '<button class="chip" data-s="' + esc(s) + '" aria-pressed="' + (state.sec === s) + '">' + esc(labelOf[s]) + "</button>";
       })).join("");
       chips.querySelectorAll(".chip").forEach(function (b) {
-        b.onclick = function () { state.sec = b.getAttribute("data-s"); state.shown = limit; renderChips(); render(); };
+        b.onclick = function () { state.sec = b.getAttribute("data-s"); state.shown = limit; state.gshown = {}; renderChips(); render(); };
+      });
+    }
+
+    function cardHtml(r, key) {
+      var useCard = cover === "card" && r.card;
+      var img = useCard ? r.card : (r.photos && r.photos[0] ? r.photos[0].src : r.card);
+      var n = (r.photos || []).length + (r.card ? 1 : 0);
+      return '<button class="card" data-k="' + key + '" aria-label="' + esc(r.title) + ' 후기 자세히 보기">' +
+        '<div class="thumb' + (useCard ? " sq" : "") + '">' + (img ? '<img src="' + esc(url(img)) + '" alt="" loading="lazy">' : "") +
+        (n > 1 ? '<span class="count">사진 ' + n + "</span>" : "") + "</div>" +
+        '<div class="body"><div class="meta">' + badge(r) + "<span>" + fmtDate(r.date) + "</span></div>" +
+        '<h3 class="ctitle">' + esc(r.title) + "</h3>" +
+        (who(r) ? '<p class="who">' + esc(who(r)) + "</p>" : "") +
+        '<p class="sum">' + esc(r.summary) + "</p>" +
+        '<span class="go">후기 보기 →</span></div></button>';
+    }
+
+    function bindCards(map) {
+      box.querySelectorAll(".card").forEach(function (c) {
+        c.onclick = function () { openModal(map[c.getAttribute("data-k")], blogHome, c); };
       });
     }
 
     function render() {
       var items = list();
-      if (!items.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">아직 등록된 후기가 없어요.</div>'; foot.innerHTML = ""; return; }
-      var view = items.slice(0, state.shown);
-      grid.innerHTML = view.map(function (r, i) {
-        var useCard = cover === "card" && r.card;
-        var img = useCard ? r.card : (r.photos && r.photos[0] ? r.photos[0].src : r.card);
-        var n = (r.photos || []).length + (r.card ? 1 : 0);
-        return '<button class="card" data-i="' + i + '" aria-label="' + esc(r.title) + ' 후기 자세히 보기">' +
-          '<div class="thumb' + (useCard ? " sq" : "") + '">' + (img ? '<img src="' + esc(url(img)) + '" alt="" loading="lazy">' : "") +
-          (n > 1 ? '<span class="count">사진 ' + n + "</span>" : "") + "</div>" +
-          '<div class="body"><div class="meta">' + badge(r) + "<span>" + fmtDate(r.date) + "</span></div>" +
-          '<h3 class="ctitle">' + esc(r.title) + "</h3>" +
-          (who(r) ? '<p class="who">' + esc(who(r)) + "</p>" : "") +
-          '<p class="sum">' + esc(r.summary) + "</p>" +
-          '<span class="go">후기 보기 →</span></div></button>';
+      if (!items.length) { box.innerHTML = '<div class="empty">아직 등록된 후기가 없어요.</div>'; foot.innerHTML = ""; return; }
+      var map = {};
+
+      if (!group) {                                   // 최신순 한 줄 (메인 화면용)
+        var view = items.slice(0, state.shown);
+        box.innerHTML = '<div class="grid">' + view.map(function (r, i) { map["a" + i] = r; return cardHtml(r, "a" + i); }).join("") + "</div>";
+        bindCards(map);
+        if (items.length > state.shown && showMore) {
+          if (moreUrl) foot.innerHTML = '<a class="more" href="' + esc(moreUrl) + '">수업 후기 더 보기</a>';
+          else {
+            foot.innerHTML = '<button class="more">더 보기 (' + (items.length - state.shown) + ')</button>';
+            foot.querySelector(".more").onclick = function () { state.shown += limit; render(); };
+          }
+        } else foot.innerHTML = "";
+        return;
+      }
+
+      // 분류별 묶음: 학생교육 후기 / 기업·성인교육 후기 / 교사연수 후기
+      var secs = [];
+      items.forEach(function (r) { if (secs.indexOf(r.section) < 0) secs.push(r.section); });
+      secs.sort(function (a, b) { return secRank(a) - secRank(b); });
+      box.innerHTML = secs.map(function (s, gi) {
+        var all = items.filter(function (r) { return r.section === s; });
+        var shown = state.gshown[s] || limit;
+        var c = COLORS[s] || { bg: "#eef0f3", fg: "#4a5160" };
+        var cards = all.slice(0, shown).map(function (r, i) { var k = "g" + gi + "_" + i; map[k] = r; return cardHtml(r, k); }).join("");
+        var more = (all.length > shown && showMore) ? '<button class="more" data-s="' + esc(s) + '">' + esc(labelOf(s)) + " 후기 더 보기 (" + (all.length - shown) + ")</button>" : "";
+        return '<section class="grp" style="--gc:' + c.fg + ";--gb:" + c.bg + '">' +
+          '<div class="ghead"><span class="gbar"></span><h3 class="gtitle">' + esc(labelOf(s)) + ' 후기</h3><span class="gnum">' + all.length + "건</span></div>" +
+          '<div class="grid">' + cards + "</div>" + more + "</section>";
       }).join("");
-      grid.querySelectorAll(".card").forEach(function (c) {
-        c.onclick = function () { openModal(view[+c.getAttribute("data-i")], blogHome, c); };
+      bindCards(map);
+      box.querySelectorAll(".grp .more").forEach(function (b) {
+        b.onclick = function () { var s = b.getAttribute("data-s"); state.gshown[s] = (state.gshown[s] || limit) + limit; render(); };
       });
-      if (items.length > state.shown && showMore) {
-        if (moreUrl) foot.innerHTML = '<a class="more" href="' + esc(moreUrl) + '">수업 후기 더 보기</a>';
-        else {
-          foot.innerHTML = '<button class="more">더 보기 (' + (items.length - state.shown) + ')</button>';
-          foot.querySelector(".more").onclick = function () { state.shown += limit; render(); };
-        }
-      } else foot.innerHTML = "";
+      foot.innerHTML = "";
     }
 
     loadData().then(function (d) {
@@ -276,7 +334,7 @@
       renderChips();
       render();
     }).catch(function () {
-      grid.innerHTML = '<div class="empty" style="grid-column:1/-1">후기를 불러오지 못했어요. 잠시 후 다시 확인해 주세요.</div>';
+      box.innerHTML = '<div class="empty">후기를 불러오지 못했어요. 잠시 후 다시 확인해 주세요.</div>';
     });
   }
 
