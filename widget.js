@@ -105,6 +105,20 @@
     "@media(max-width:560px){.ov{padding:0;align-items:flex-end}.box{border-radius:18px 18px 0 0;max-height:92vh}.in{padding:18px}h3{font-size:19px}}"
   ].join("");
 
+  var FCSS = [
+    ":host{all:initial;font-family:inherit}",
+    "*{box-sizing:border-box}",
+    ".bar{background:rgba(255,255,255,.97);border-bottom:1px solid #eceef1;box-shadow:0 6px 16px rgba(20,30,50,.07);font-family:inherit;color:#1f2329}",
+    ".in{max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}",
+    ".lbl{font-size:15px;font-weight:800;white-space:nowrap;letter-spacing:-.01em}",
+    ".chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}",
+    ".chips::-webkit-scrollbar{display:none}",
+    ".chip{flex:0 0 auto;white-space:nowrap;font:inherit;font-size:14px;font-weight:600;border:1px solid #d9dde3;background:#fff;color:#4a5160;padding:6px 13px;border-radius:999px;cursor:pointer}",
+    ".chip:hover{border-color:#1F7A45;color:#1F7A45}",
+    ".chip[aria-pressed=true]{background:#1F7A45;border-color:#1F7A45;color:#fff}",
+    "@media(max-width:560px){.lbl{font-size:14px}.in{padding:8px 12px;gap:8px}}"
+  ].join("");
+
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -256,26 +270,116 @@
 
     function list() { return state.all.filter(function (r) { return !state.sec || r.section === state.sec; }); }
 
-    function renderChips() {
-      if (!showFilter) { chips.innerHTML = ""; return; }
+    // ---- 같은 페이지에 '전체 후기' 위젯이 있으면(연결 모드): 이 위젯의 필터는 아래 전체 목록을 거르는 메뉴
+    var navSec = "";
+    function linkedFull() { return samePage ? findFullWidget() : null; }
+
+    function chipSecs() {
       var secs = [];
       state.all.forEach(function (r) { if (secs.indexOf(r.section) < 0) secs.push(r.section); });
-      var order = ["학생교육", "성인교육", "교사강사연수"];
-      secs.sort(function (a, b) { return (order.indexOf(a) + 99) % 99 - (order.indexOf(b) + 99) % 99; });
-      if (secs.length < 2) { chips.innerHTML = ""; return; }
-      var labelOf = {};
-      state.all.forEach(function (r) { labelOf[r.section] = r.label || FALLBACK_LABEL[r.section] || r.section; });
-      chips.innerHTML = ['<button class="chip" data-s="" aria-pressed="' + (!state.sec) + '">전체</button>'].concat(secs.map(function (s) {
-        return '<button class="chip" data-s="' + esc(s) + '" aria-pressed="' + (state.sec === s) + '">' + esc(labelOf[s]) + "</button>";
+      secs.sort(function (a, b) { return secRank(a) - secRank(b); });
+      return secs;
+    }
+    function chipsHtml(active) {
+      return ['<button class="chip" data-s="" aria-pressed="' + (!active) + '">전체</button>'].concat(chipSecs().map(function (s) {
+        return '<button class="chip" data-s="' + esc(s) + '" aria-pressed="' + (active === s) + '">' + esc(labelOf(s)) + "</button>";
       })).join("");
-      chips.querySelectorAll(".chip").forEach(function (b) {
-        b.onclick = function () {
-          var sec = b.getAttribute("data-s");
-          applySec(sec);
-          // 같은 페이지의 다른 후기 위젯(예: 아래 '수업 후기' 전체 목록)도 같은 분류로 맞춤
-          try { window.dispatchEvent(new CustomEvent("edumaker-reviews-filter", { detail: { sec: sec, from: host } })); } catch (e) { /* 무시 */ }
-        };
+    }
+    function bindChips(container) {
+      container.querySelectorAll(".chip").forEach(function (b) {
+        b.onclick = function () { pickSec(b.getAttribute("data-s")); };
       });
+    }
+    function renderChips() {
+      if (!showFilter || chipSecs().length < 2) { chips.innerHTML = ""; renderFloat(); return; }
+      chips.innerHTML = chipsHtml(linkedFull() ? navSec : state.sec);
+      bindChips(chips);
+      renderFloat();
+    }
+    function pickSec(sec) {
+      var full = linkedFull();
+      if (full) {
+        // 위쪽 최신 후기는 그대로 두고, 아래 전체 목록을 그 분류로 바꾼 뒤 그곳으로 이동
+        navSec = sec;
+        renderChips();
+        try { window.dispatchEvent(new CustomEvent("edumaker-reviews-filter", { detail: { sec: sec, from: host } })); } catch (e) { /* 무시 */ }
+        setTimeout(function () { scrollToEl(full); }, 30);
+      } else {
+        applySec(sec);
+        try { window.dispatchEvent(new CustomEvent("edumaker-reviews-filter", { detail: { sec: sec, from: host } })); } catch (e) { /* 무시 */ }
+      }
+    }
+
+    // 화면 위에 고정된 메뉴바(아임웹 헤더) 높이
+    function headerOffset() {
+      var offset = 0;
+      try {
+        var els = document.elementsFromPoint(Math.round(window.innerWidth / 2), 2);
+        for (var i = 0; i < els.length; i++) {
+          var el = els[i];
+          if (fl && (el === fl || fl.contains(el))) continue;
+          while (el && el !== document.body && el !== document.documentElement) {
+            var pos = getComputedStyle(el).position;
+            if (pos === "fixed" || pos === "sticky") { offset = Math.max(offset, el.getBoundingClientRect().bottom); break; }
+            el = el.parentElement;
+          }
+        }
+      } catch (err) { /* 무시 */ }
+      return Math.max(0, Math.min(offset, 200));
+    }
+    function scrollToEl(el) {
+      var barH = fl ? (fl.offsetHeight || flH || 58) : 0;
+      var y = el.getBoundingClientRect().top + window.pageYOffset - headerOffset() - barH - 12;
+      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+    }
+
+    // ---- 스크롤해도 따라오는 필터 바 (연결 모드에서만)
+    var fl = null, flRoot = null, flH = 0, flTick = false;
+    function renderFloat() {
+      var full = linkedFull();
+      if (!full || !showFilter || chipSecs().length < 2) { if (fl) fl.style.display = "none"; return; }
+      if (!fl) {
+        fl = document.createElement("div");
+        fl.setAttribute("data-edumaker-review-float", "");
+        fl.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:2147482000;display:none";
+        document.body.appendChild(fl);
+        flRoot = fl.attachShadow ? fl.attachShadow({ mode: "open" }) : fl;
+        flRoot.innerHTML = "<style>" + FCSS + "</style>" +
+          '<div class="bar"><div class="in"><span class="lbl"></span><div class="chips"></div></div></div>';
+        window.addEventListener("scroll", onFloatScroll, { passive: true });
+        window.addEventListener("resize", onFloatScroll);
+      }
+      flRoot.querySelector(".lbl").textContent = full.dataset.title || "수업 후기";
+      var fc = flRoot.querySelector(".chips");
+      fc.innerHTML = chipsHtml(navSec);
+      bindChips(fc);
+      updateFloat();
+      flShownSec = null;
+      showActiveChip();
+    }
+    // 휴대폰에서 고른 버튼이 화면 밖에 있으면 보이도록 옆으로 밀기
+    var flShownSec = null;
+    function showActiveChip() {
+      if (!fl || fl.style.display === "none" || flShownSec === navSec) return;
+      var fc = flRoot.querySelector(".chips");
+      var act = fc.querySelector('.chip[aria-pressed="true"]');
+      if (act) { fc.scrollLeft = Math.max(0, act.offsetLeft - fc.offsetLeft - 40); flShownSec = navSec; }
+    }
+    function onFloatScroll() {
+      if (flTick) return;
+      flTick = true;
+      (window.requestAnimationFrame || setTimeout)(function () { flTick = false; updateFloat(); });
+    }
+    function updateFloat() {
+      var full = linkedFull();
+      if (!fl || !full) return;
+      var top = headerOffset();
+      fl.style.top = top + "px";
+      var cr = chips.getBoundingClientRect(), fr = full.getBoundingClientRect();
+      // 위쪽 필터가 화면 밖으로 올라갔고, 아래 전체 목록이 아직 화면에 있을 때만 보이기
+      var show = cr.bottom < top + 4 && fr.bottom > top + 120;
+      fl.style.display = show ? "block" : "none";
+      if (show) { flH = fl.offsetHeight || flH; showActiveChip(); }
     }
 
     function cardHtml(r, key) {
@@ -322,24 +426,7 @@
             foot.innerHTML = '<a class="more" href="' + esc(moreUrl) + '">수업 후기 더 보기</a>';
             foot.querySelector(".more").onclick = function (e) {
               var full = samePage && findFullWidget();
-              if (full) {
-                e.preventDefault();
-                // 화면 위에 고정된 메뉴바 높이만큼 덜 내려가서 제목·필터가 가려지지 않게
-                var offset = 0;
-                try {
-                  var els = document.elementsFromPoint(Math.round(window.innerWidth / 2), 2);
-                  for (var i = 0; i < els.length; i++) {
-                    var el = els[i];
-                    while (el && el !== document.body && el !== document.documentElement) {
-                      var pos = getComputedStyle(el).position;
-                      if (pos === "fixed" || pos === "sticky") { offset = Math.max(offset, el.getBoundingClientRect().bottom); break; }
-                      el = el.parentElement;
-                    }
-                  }
-                } catch (err) { /* 무시 */ }
-                var y = full.getBoundingClientRect().top + window.pageYOffset - Math.min(offset, 200) - 16;
-                window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
-              }
+              if (full) { e.preventDefault(); scrollToEl(full); }
             };
           }
           else {
