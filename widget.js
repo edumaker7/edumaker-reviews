@@ -15,6 +15,7 @@
  *   data-title="수업 후기"  위젯 위에 제목 표시
  *   data-columns="3"       PC 에서 한 줄 개수 (기본 3)
  *   (필터 버튼을 누르면 같은 페이지의 다른 후기 위젯도 같은 분류로 함께 바뀝니다)
+ *   data-latest="3"        (묶음 모드) 맨 위에 '최신 수업 후기' N개 — 필터 '전체'일 때만
  *   data-group="false"     분류별 묶음(학생교육 후기 / 기업·성인교육 후기 / 교사연수 후기) 끄기
  *                          (기본: 후기 페이지는 묶음, data-more-url 을 쓴 메인용은 최신순 한 줄)
  */
@@ -237,6 +238,8 @@
     var cover = ds.cover || "photo";
     var cols = parseInt(ds.columns || "3", 10) || 3;
     var group = ds.group ? ds.group !== "false" : (!moreUrl && !ds.section);
+    var latestN = group ? (parseInt(ds.latest || "0", 10) || 0) : 0;   // 맨 위 '최신 수업 후기' 개수 (0=없음)
+    var latestTitle = ds.latestTitle || "최신 수업 후기";
     // 최신 후기 위젯과 전체 후기 위젯이 같은 페이지에 있으면:
     // '수업 후기 더 보기'를 누를 때 페이지 이동 대신 아래 전체 후기 위젯으로 부드럽게 이동
     var samePage = false;
@@ -271,8 +274,7 @@
     function list() { return state.all.filter(function (r) { return !state.sec || r.section === state.sec; }); }
 
     // ---- 같은 페이지에 '전체 후기' 위젯이 있으면(연결 모드): 이 위젯의 필터는 아래 전체 목록을 거르는 메뉴
-    var navSec = "";
-    function linkedFull() { return samePage ? findFullWidget() : null; }
+    function linkedFull() { return null; }
 
     function chipSecs() {
       var secs = [];
@@ -292,22 +294,15 @@
     }
     function renderChips() {
       if (!showFilter || chipSecs().length < 2) { chips.innerHTML = ""; renderFloat(); return; }
-      chips.innerHTML = chipsHtml(linkedFull() ? navSec : state.sec);
+      chips.innerHTML = chipsHtml(state.sec);
       bindChips(chips);
       renderFloat();
     }
     function pickSec(sec) {
-      var full = linkedFull();
-      if (full) {
-        // 위쪽 최신 후기는 그대로 두고, 아래 전체 목록을 그 분류로 바꾼 뒤 그곳으로 이동
-        navSec = sec;
-        renderChips();
-        try { window.dispatchEvent(new CustomEvent("edumaker-reviews-filter", { detail: { sec: sec, from: host } })); } catch (e) { /* 무시 */ }
-        setTimeout(function () { scrollToEl(full); }, 30);
-      } else {
-        applySec(sec);
-        try { window.dispatchEvent(new CustomEvent("edumaker-reviews-filter", { detail: { sec: sec, from: host } })); } catch (e) { /* 무시 */ }
-      }
+      var floating = fl && fl.style.display !== "none";
+      applySec(sec);
+      // 따라 나온 필터에서 눌렀으면 목록 맨 위로 이동 (제목이 바뀐 걸 바로 보이게)
+      if (floating) setTimeout(function () { scrollToEl(box); }, 30);
     }
 
     // 화면 위에 고정된 메뉴바(아임웹 헤더) 높이
@@ -336,8 +331,7 @@
     // ---- 스크롤해도 따라오는 필터 바 (연결 모드에서만)
     var fl = null, flRoot = null, flH = 0, flTick = false;
     function renderFloat() {
-      var full = linkedFull();
-      if (!full || !showFilter || chipSecs().length < 2) { if (fl) fl.style.display = "none"; return; }
+      if (!group || !showFilter || chipSecs().length < 2) { if (fl) fl.style.display = "none"; return; }
       if (!fl) {
         fl = document.createElement("div");
         fl.setAttribute("data-edumaker-review-float", "");
@@ -349,9 +343,9 @@
         window.addEventListener("scroll", onFloatScroll, { passive: true });
         window.addEventListener("resize", onFloatScroll);
       }
-      flRoot.querySelector(".lbl").textContent = full.dataset.title || "수업 후기";
+      flRoot.querySelector(".lbl").textContent = ds.title || "수업 후기";
       var fc = flRoot.querySelector(".chips");
-      fc.innerHTML = chipsHtml(navSec);
+      fc.innerHTML = chipsHtml(state.sec);
       bindChips(fc);
       updateFloat();
       flShownSec = null;
@@ -360,10 +354,10 @@
     // 휴대폰에서 고른 버튼이 화면 밖에 있으면 보이도록 옆으로 밀기
     var flShownSec = null;
     function showActiveChip() {
-      if (!fl || fl.style.display === "none" || flShownSec === navSec) return;
+      if (!fl || fl.style.display === "none" || flShownSec === state.sec) return;
       var fc = flRoot.querySelector(".chips");
       var act = fc.querySelector('.chip[aria-pressed="true"]');
-      if (act) { fc.scrollLeft = Math.max(0, act.offsetLeft - fc.offsetLeft - 40); flShownSec = navSec; }
+      if (act) { fc.scrollLeft = Math.max(0, act.offsetLeft - fc.offsetLeft - 40); flShownSec = state.sec; }
     }
     function onFloatScroll() {
       if (flTick) return;
@@ -371,12 +365,11 @@
       (window.requestAnimationFrame || setTimeout)(function () { flTick = false; updateFloat(); });
     }
     function updateFloat() {
-      var full = linkedFull();
-      if (!fl || !full) return;
+      if (!fl) return;
       var top = headerOffset();
       fl.style.top = top + "px";
-      var cr = chips.getBoundingClientRect(), fr = full.getBoundingClientRect();
-      // 위쪽 필터가 화면 밖으로 올라갔고, 아래 전체 목록이 아직 화면에 있을 때만 보이기
+      var cr = chips.getBoundingClientRect(), fr = host.getBoundingClientRect();
+      // 필터가 화면 밖으로 올라갔고, 후기 목록이 아직 화면에 있을 때만 보이기
       var show = cr.bottom < top + 4 && fr.bottom > top + 120;
       fl.style.display = show ? "block" : "none";
       if (show) { flH = fl.offsetHeight || flH; showActiveChip(); }
@@ -441,7 +434,13 @@
       var secs = [];
       items.forEach(function (r) { if (secs.indexOf(r.section) < 0) secs.push(r.section); });
       secs.sort(function (a, b) { return secRank(a) - secRank(b); });
-      box.innerHTML = secs.map(function (s, gi) {
+      var latestHtml = "";
+      if (latestN && !state.sec) {
+        latestHtml = '<section class="grp" style="--gc:#1f2329;--gb:#eef0f3">' +
+          '<div class="ghead"><span class="gbar"></span><h3 class="gtitle">' + esc(latestTitle) + "</h3></div>" +
+          '<div class="grid">' + items.slice(0, latestN).map(function (r, i) { var k = "n" + i; map[k] = r; return cardHtml(r, k); }).join("") + "</div></section>";
+      }
+      box.innerHTML = latestHtml + secs.map(function (s, gi) {
         var all = items.filter(function (r) { return r.section === s; });
         var shown = state.gshown[s] || limit;
         var c = COLORS[s] || { bg: "#eef0f3", fg: "#4a5160" };
