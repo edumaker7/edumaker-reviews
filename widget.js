@@ -105,7 +105,7 @@
     ".btn{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none}",
     ".blog{background:#03C75A;color:#fff}.blog:hover{background:#02b350}",
     ".ig{background:#fff;color:#c13584;border:1.5px solid #e5c1d6}.ig:hover{background:#fdf2f8}",
-    ".pg{background:#fff;color:#4a5160;border:1.5px solid #d9dde3}.pg:hover{background:#f6f8f7}",
+    ".ask{background:#1F7A45;color:#fff}.ask:hover{background:#18653a}",
     "@media(max-width:560px){.ov{padding:0;align-items:flex-end}.box{border-radius:18px 18px 0 0;max-height:92vh}.in{padding:18px}h3{font-size:19px}}"
   ].join("");
 
@@ -141,6 +141,7 @@
   function blogLink(r, blogHome) { return r.blog_url || blogHome; }
 
   var siteUrl = "";
+  var contactUrl = "https://www.edumaker.kr/contact";
   var dataPromise = null;
   function loadData() {
     if (!dataPromise) {
@@ -188,7 +189,7 @@
       (r.tags && r.tags.length ? '<div class="tags">' + r.tags.map(function (t) { return "<span>#" + esc(t) + "</span>"; }).join("") + "</div>" : "") +
       '<div class="btns"><a class="btn blog" target="_blank" rel="noopener" href="' + esc(blogLink(r, blogHome)) + '">블로그에서 전체 후기 보기 →</a>' +
       (r.instagram_url ? '<a class="btn ig" target="_blank" rel="noopener" href="' + esc(r.instagram_url) + '">인스타그램</a>' : "") +
-      (siteUrl ? '<a class="btn pg" target="_blank" rel="noopener" href="' + esc(siteUrl.replace(/\/+$/, "") + "/r/" + r.id + "/") + '">후기 페이지</a>' : "") +
+      '<a class="btn ask" target="_top" href="' + esc(contactUrl) + '">교육 문의하기</a>' +
       "</div></div></div></div>";
 
     var mainImg = root.querySelector(".main img");
@@ -496,6 +497,7 @@
       state.all = (d.reviews || []).slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
       if (d.blog_home) blogHome = d.blog_home;
       if (d.site_url) siteUrl = d.site_url;
+      if (d.contact_url) contactUrl = d.contact_url;
       renderChips();
       render();
     }).catch(function () {
