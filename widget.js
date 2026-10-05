@@ -307,20 +307,33 @@
 
     // 화면 위에 고정된 메뉴바(아임웹 헤더) 높이
     function headerOffset() {
+      // 화면 맨 위에 고정된 메뉴바들(아임웹은 PC 에서 2줄일 수 있음)을 위에서부터 차례로 쌓아 계산
       var offset = 0;
       try {
-        var els = document.elementsFromPoint(Math.round(window.innerWidth / 2), 2);
-        for (var i = 0; i < els.length; i++) {
-          var el = els[i];
-          if (fl && (el === fl || fl.contains(el))) continue;
-          while (el && el !== document.body && el !== document.documentElement) {
-            var pos = getComputedStyle(el).position;
-            if (pos === "fixed" || pos === "sticky") { offset = Math.max(offset, el.getBoundingClientRect().bottom); break; }
-            el = el.parentElement;
+        var xs = [0.5, 0.25, 0.75].map(function (f) { return Math.round(window.innerWidth * f); });
+        for (var step = 0; step < 5; step++) {
+          var y = Math.round(offset) + 2, next = offset;
+          for (var xi = 0; xi < xs.length; xi++) {
+            var els = document.elementsFromPoint(xs[xi], y);
+            for (var i = 0; i < els.length; i++) {
+              var el = els[i];
+              if (fl && (el === fl || fl.contains(el))) continue;
+              while (el && el !== document.body && el !== document.documentElement) {
+                var pos = getComputedStyle(el).position;
+                if (pos === "fixed" || pos === "sticky") {
+                  var r = el.getBoundingClientRect();
+                  if (r.top <= y + 1 && r.bottom > next && r.height < window.innerHeight * 0.5) next = r.bottom;
+                  break;
+                }
+                el = el.parentElement;
+              }
+            }
           }
+          if (next <= offset + 0.5) break;
+          offset = next;
         }
       } catch (err) { /* 무시 */ }
-      return Math.max(0, Math.min(offset, 200));
+      return Math.max(0, Math.min(offset, 300));
     }
     function scrollToEl(el) {
       var barH = fl ? (fl.offsetHeight || flH || 58) : 0;
