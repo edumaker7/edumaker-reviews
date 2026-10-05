@@ -221,16 +221,20 @@
     var moreUrl = ds.moreUrl || "";
     var cover = ds.cover || "photo";
     var cols = parseInt(ds.columns || "3", 10) || 3;
-    var group = ds.group ? ds.group !== "false" : !moreUrl;
-    // 메인용 위젯(더 보기 → /review)이 바로 그 후기 페이지에 같이 들어가 있으면 숨김 (중복 방지)
+    var group = ds.group ? ds.group !== "false" : (!moreUrl && !ds.section);
+    // 최신 후기 위젯과 전체 후기 위젯이 같은 페이지에 있으면:
+    // '수업 후기 더 보기'를 누를 때 페이지 이동 대신 아래 전체 후기 위젯으로 부드럽게 이동
+    var samePage = false;
     if (moreUrl) {
       try {
         var target = new URL(moreUrl, location.href);
-        if (target.host === location.host && target.pathname.replace(/\/+$/, "") === location.pathname.replace(/\/+$/, "")) {
-          host.style.display = "none";
-          return;
-        }
+        samePage = target.host === location.host && target.pathname.replace(/\/+$/, "") === location.pathname.replace(/\/+$/, "");
       } catch (e) { /* 무시 */ }
+    }
+    function findFullWidget() {
+      var all = document.querySelectorAll("#edumaker-reviews, [data-edumaker-reviews]");
+      for (var i = 0; i < all.length; i++) if (all[i] !== host && !all[i].dataset.moreUrl) return all[i];
+      return null;
     }
     var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
     var state = { sec: ds.section || "", shown: limit, all: [], gshown: {} };
@@ -298,7 +302,13 @@
         box.innerHTML = '<div class="grid">' + view.map(function (r, i) { map["a" + i] = r; return cardHtml(r, "a" + i); }).join("") + "</div>";
         bindCards(map);
         if (items.length > state.shown && showMore) {
-          if (moreUrl) foot.innerHTML = '<a class="more" href="' + esc(moreUrl) + '">수업 후기 더 보기</a>';
+          if (moreUrl) {
+            foot.innerHTML = '<a class="more" href="' + esc(moreUrl) + '">수업 후기 더 보기</a>';
+            foot.querySelector(".more").onclick = function (e) {
+              var full = samePage && findFullWidget();
+              if (full) { e.preventDefault(); full.scrollIntoView({ behavior: "smooth", block: "start" }); }
+            };
+          }
           else {
             foot.innerHTML = '<button class="more">더 보기 (' + (items.length - state.shown) + ')</button>';
             foot.querySelector(".more").onclick = function () { state.shown += limit; render(); };
