@@ -15,6 +15,7 @@
  *   data-title="수업 후기"  위젯 위에 제목 표시
  *   data-columns="3"       PC 에서 한 줄 개수 (기본 3)
  *   (필터 버튼을 누르면 같은 페이지의 다른 후기 위젯도 같은 분류로 함께 바뀝니다)
+ *   data-tagline="문구"      제목 대신 작은 안내 문구 (예: 에듀메이커가 만난 배움의 현장)
  *   data-latest="3"        (묶음 모드) 맨 위에 '최신 수업 후기' N개 — 필터 '전체'일 때만
  *   data-group="false"     분류별 묶음(학생교육 후기 / 기업·성인교육 후기 / 교사연수 후기) 끄기
  *                          (기본: 후기 페이지는 묶음, data-more-url 을 쓴 메인용은 최신순 한 줄)
@@ -39,6 +40,8 @@
     ".wrap{max-width:1200px;margin:0 auto}",
     ".head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}",
     ".title{font-size:26px;font-weight:800;margin:0;letter-spacing:-.02em}",
+    ".tagline{font-size:19px;font-weight:600;color:#3b4250;margin:0;letter-spacing:-.01em}",
+    "@media(max-width:560px){.tagline{font-size:16px}}",
     ".chips{display:flex;gap:8px;flex-wrap:wrap}",
     ".chip{font:inherit;font-size:14px;font-weight:600;border:1px solid #d9dde3;background:#fff;color:#4a5160;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.15s}",
     ".chip:hover{border-color:#1F7A45;color:#1F7A45}",
@@ -253,7 +256,7 @@
     var cols = parseInt(ds.columns || "3", 10) || 3;
     var group = ds.group ? ds.group !== "false" : (!moreUrl && !ds.section);
     var latestN = group ? (parseInt(ds.latest || "0", 10) || 0) : 0;   // 맨 위 '최신 수업 후기' 개수 (0=없음)
-    var latestTitle = ds.latestTitle || "최신 수업 후기";
+    var latestTitle = ds.latestTitle || "최신 후기";
     // 최신 후기 위젯과 전체 후기 위젯이 같은 페이지에 있으면:
     // '수업 후기 더 보기'를 누를 때 페이지 이동 대신 아래 전체 후기 위젯으로 부드럽게 이동
     var samePage = false;
@@ -274,7 +277,7 @@
 
     root.innerHTML = "<style>" + CSS + "</style>" +
       '<div class="wrap" style="--cols:' + cols + '">' +
-      '<div class="head">' + (ds.title ? '<h2 class="title">' + esc(ds.title) + "</h2>" : "<span></span>") + '<div class="chips"></div></div>' +
+      '<div class="head">' + (ds.title ? '<h2 class="title">' + esc(ds.title) + "</h2>" : (ds.tagline ? '<p class="tagline">' + esc(ds.tagline) + "</p>" : "<span></span>")) + '<div class="chips"></div></div>' +
       '<div class="list"><div class="grid">' + new Array(Math.min(limit, cols) + 1).join(".").split(".").slice(1).map(function () { return '<div class="sk"></div>'; }).join("") + "</div></div>" +
       '<div class="foot"></div></div>';
     var box = root.querySelector(".list"), chips = root.querySelector(".chips"), foot = root.querySelector(".foot");
