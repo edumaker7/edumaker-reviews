@@ -23,6 +23,8 @@
   "use strict";
   var script = document.currentScript;
   var BASE = script ? script.src.replace(/[^\/]*(\?.*)?$/, "") : "./";
+  var FALLBACK_BASE = "https://review.edumaker.kr/";
+  if (/edumaker7\.github\.io\/edumaker-reviews\//.test(BASE)) BASE = FALLBACK_BASE;   // 도메인 연결 후 예전 주소
 
   var COLORS = {
     "학생교육": { bg: "#E8F5EC", fg: "#1F7A45" },
@@ -143,9 +145,17 @@
   function loadData() {
     if (!dataPromise) {
       var v = Math.floor(Date.now() / 600000); // 10분 단위 캐시
-      dataPromise = fetch(BASE + "reviews.json?v=" + v, { cache: "no-cache" }).then(function (r) {
-        if (!r.ok) throw new Error(r.status);
-        return r.json();
+      var get = function (base) {
+        return fetch(base + "reviews.json?v=" + v, { cache: "no-cache" }).then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        });
+      };
+      // 예전 주소(github.io)로 넣은 코드는 새 주소(review.edumaker.kr)로 다시 시도
+      dataPromise = get(BASE).catch(function (err) {
+        if (BASE.indexOf(FALLBACK_BASE) === 0) throw err;
+        BASE = FALLBACK_BASE;
+        return get(BASE);
       }).then(function (d) { return Array.isArray(d) ? { reviews: d } : d; });
     }
     return dataPromise;
