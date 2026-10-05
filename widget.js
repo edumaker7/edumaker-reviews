@@ -14,6 +14,7 @@
  *   data-cover="card"      카드 대표 이미지를 카드뉴스로 (기본: 현장 사진)
  *   data-title="수업 후기"  위젯 위에 제목 표시
  *   data-columns="3"       PC 에서 한 줄 개수 (기본 3)
+ *   (필터 버튼을 누르면 같은 페이지의 다른 후기 위젯도 같은 분류로 함께 바뀝니다)
  *   data-group="false"     분류별 묶음(학생교육 후기 / 기업·성인교육 후기 / 교사연수 후기) 끄기
  *                          (기본: 후기 페이지는 묶음, data-more-url 을 쓴 메인용은 최신순 한 줄)
  */
@@ -268,7 +269,12 @@
         return '<button class="chip" data-s="' + esc(s) + '" aria-pressed="' + (state.sec === s) + '">' + esc(labelOf[s]) + "</button>";
       })).join("");
       chips.querySelectorAll(".chip").forEach(function (b) {
-        b.onclick = function () { state.sec = b.getAttribute("data-s"); state.shown = limit; state.gshown = {}; renderChips(); render(); };
+        b.onclick = function () {
+          var sec = b.getAttribute("data-s");
+          applySec(sec);
+          // 같은 페이지의 다른 후기 위젯(예: 아래 '수업 후기' 전체 목록)도 같은 분류로 맞춤
+          try { window.dispatchEvent(new CustomEvent("edumaker-reviews-filter", { detail: { sec: sec, from: host } })); } catch (e) { /* 무시 */ }
+        };
       });
     }
 
@@ -292,6 +298,16 @@
       });
     }
 
+    function applySec(sec) {
+      if (ds.section) return;                      // 한 분류 고정 위젯은 따라가지 않음
+      state.sec = sec; state.shown = limit; state.gshown = {};
+      renderChips(); render();
+    }
+    window.addEventListener("edumaker-reviews-filter", function (e) {
+      if (!e.detail || e.detail.from === host || !state.all.length) return;
+      applySec(e.detail.sec || "");
+    });
+
     function render() {
       var items = list();
       if (!items.length) { box.innerHTML = '<div class="empty">아직 등록된 후기가 없어요.</div>'; foot.innerHTML = ""; return; }
@@ -306,7 +322,24 @@
             foot.innerHTML = '<a class="more" href="' + esc(moreUrl) + '">수업 후기 더 보기</a>';
             foot.querySelector(".more").onclick = function (e) {
               var full = samePage && findFullWidget();
-              if (full) { e.preventDefault(); full.scrollIntoView({ behavior: "smooth", block: "start" }); }
+              if (full) {
+                e.preventDefault();
+                // 화면 위에 고정된 메뉴바 높이만큼 덜 내려가서 제목·필터가 가려지지 않게
+                var offset = 0;
+                try {
+                  var els = document.elementsFromPoint(Math.round(window.innerWidth / 2), 2);
+                  for (var i = 0; i < els.length; i++) {
+                    var el = els[i];
+                    while (el && el !== document.body && el !== document.documentElement) {
+                      var pos = getComputedStyle(el).position;
+                      if (pos === "fixed" || pos === "sticky") { offset = Math.max(offset, el.getBoundingClientRect().bottom); break; }
+                      el = el.parentElement;
+                    }
+                  }
+                } catch (err) { /* 무시 */ }
+                var y = full.getBoundingClientRect().top + window.pageYOffset - Math.min(offset, 200) - 16;
+                window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+              }
             };
           }
           else {
