@@ -31,7 +31,7 @@
     "성인교육": { bg: "#E8EEFA", fg: "#2B4C9B" },
     "교사강사연수": { bg: "#FDF0E3", fg: "#B85C0A" }
   };
-  var FALLBACK_LABEL = { "학생교육": "학생교육", "성인교육": "기업·성인교육", "교사강사연수": "교사연수" };
+  var FALLBACK_LABEL = { "학생교육": "학생교육", "성인교육": "기업·성인교육", "교사강사연수": "교사·강사연수" };
 
   var CSS = [
     ":host{all:initial;display:block;font-family:inherit;color:#1f2329;line-height:1.55;-webkit-font-smoothing:antialiased}",
@@ -184,7 +184,7 @@
       "<h3>" + esc(r.title) + "</h3>" +
       (r.headline && r.headline.length ? '<p class="hl">' + esc(r.headline.join(" · ")) + "</p>" : "") +
       (facts.length ? '<dl class="facts">' + facts.map(function (f) { return "<dt>" + esc(f.k) + "</dt><dd>" + esc(f.v) + "</dd>"; }).join("") + "</dl>" : "") +
-      '<p class="sum">' + esc(r.summary) + "</p>" +
+      '<p class="sum">' + esc(String(r.summary || "").replace(/([.!?])\s+(?=[^\s)])/g, "$1\n")) + "</p>" +
       (r.tags && r.tags.length ? '<div class="tags">' + r.tags.map(function (t) { return "<span>#" + esc(t) + "</span>"; }).join("") + "</div>" : "") +
       '<div class="btns"><a class="btn blog" target="_blank" rel="noopener" href="' + esc(blogLink(r, blogHome)) + '">블로그에서 전체 후기 보기 →</a>' +
       (r.instagram_url ? '<a class="btn ig" target="_blank" rel="noopener" href="' + esc(r.instagram_url) + '">인스타그램</a>' : "") +
