@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학교 아두이노교육, 초음파센서로 잰 거리를 LCD에 띄워 보다 (서울 중학교) | 에듀메이커 수업 후기</title>
+<meta name="description" content="오늘은 서울의 한 중학교에서 진행한 아두이노교육, 피지컬코딩 수업 현장을 소개해 드릴게요! 1학년 5개 반, 2학년 5개 반 학생들이 반마다 8차시 동안 아두이노와 센서를 직접 연결하고 코딩으로 움직이는 작품을 만들어 보았답니다. 요즘 AI가 화면 밖으로 나와 로봇과…">
+<link rel="canonical" href="https://review.edumaker.kr/r/202610041500-a1b717/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="에듀메이커 수업 후기">
+<meta property="og:title" content="중학교 아두이노교육, 초음파센서로 잰 거리를 LCD에 띄워 보다 (서울 중학교) | 에듀메이커 수업 후기">
+<meta property="og:description" content="오늘은 서울의 한 중학교에서 진행한 아두이노교육, 피지컬코딩 수업 현장을 소개해 드릴게요! 1학년 5개 반, 2학년 5개 반 학생들이 반마다 8차시 동안 아두이노와 센서를 직접 연결하고 코딩으로 움직이는 작품을 만들어 보았답니다. 요즘 AI가 화면 밖으로 나와 로봇과…">
+<meta property="og:url" content="https://review.edumaker.kr/r/202610041500-a1b717/">
+<meta property="og:image" content="https://review.edumaker.kr/images/202610041500-a1b717/01.jpg">
+<link rel="alternate" type="application/rss+xml" title="에듀메이커 수업 후기" href="https://review.edumaker.kr/rss.xml">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#1f2329;background:#fff;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:inherit}.top{border-bottom:1px solid #eceef1;background:#fff}.top .in{max-width:1080px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{white-space:nowrap;font-weight:800;letter-spacing:-.02em;text-decoration:none;font-size:17px}.brand b{color:#1F7A45}.nav a{font-size:14px;color:#4a5160;text-decoration:none;margin-left:16px}
+main{max-width:1080px;margin:0 auto;padding:28px 20px 60px}.crumb{font-size:13px;color:#7a818c;margin:0 0 14px}.crumb a{text-decoration:none}
+h1{font-size:28px;line-height:1.35;letter-spacing:-.02em;margin:6px 0 10px}.meta{display:flex;gap:8px;align-items:center;font-size:14px;color:#7a818c;flex-wrap:wrap}
+.badge{font-size:12px;font-weight:700;padding:3px 9px;border-radius:6px}.hl{color:#5b6270;margin:4px 0 18px}
+.photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0 22px}.photos img{width:100%;height:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#f2f4f6;display:block}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;background:#f6f8f7;border-radius:12px;padding:16px 18px;margin:0 0 20px}.facts dt{font-weight:700;color:#1F7A45;white-space:nowrap}.facts dd{margin:0}
+.sum{font-size:16px;margin:0 0 22px}.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 24px;padding:0;list-style:none}.tags li{font-size:13px;color:#5b6270;background:#f1f3f5;padding:3px 10px;border-radius:999px}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 30px}.btn{display:inline-block;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none;font-size:15px}
+.blog{background:#03C75A;color:#fff}.ig{border:1.5px solid #e5c1d6;color:#c13584}.ask{border:1.5px solid #1F7A45;color:#1F7A45}
+h2{font-size:21px;margin:40px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--c,#1F7A45);display:flex;align-items:center;gap:10px}
+h2 small{font-size:13px;font-weight:700;color:var(--c);background:var(--b);padding:2px 10px;border-radius:999px}
+.sec-desc{color:#5b6270;font-size:14px;margin:-6px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.card{display:flex;flex-direction:column;border:1px solid #eceef1;border-radius:14px;overflow:hidden;text-decoration:none;background:#fff}
+.card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#f2f4f6}.card .b{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px}
+.card h3{font-size:16px;line-height:1.45;margin:0}.card p{font-size:14px;color:#4a5160;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.intro{color:#4a5160;margin:0 0 6px}.more{margin:30px 0 0;font-size:14px;color:#5b6270}
+footer{border-top:1px solid #eceef1;background:#fafbfc}footer .in{max-width:1080px;margin:0 auto;padding:22px 20px;font-size:13px;color:#7a818c;line-height:1.8}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){h1{font-size:22px}.grid{grid-template-columns:1fr}.photos{grid-template-columns:1fr}.brand{font-size:15px}.nav{white-space:nowrap}.nav a{margin-left:8px;font-size:13px}}
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "중학교 아두이노교육, 초음파센서로 잰 거리를 LCD에 띄워 보다 (서울 중학교)", "description": "오늘은 서울의 한 중학교에서 진행한 아두이노교육, 피지컬코딩 수업 현장을 소개해 드릴게요! 1학년 5개 반, 2학년 5개 반 학생들이 반마다 8차시 동안 아두이노와 센서를 직접 연결하고 코딩으로 움직이는 작품을 만들어 보았답니다. 요즘 AI가 화면 밖으로 나와 로봇과…", "datePublished": "2026-10-04", "dateModified": "2026-10-05", "image": ["https://review.edumaker.kr/images/202610041500-a1b717/01.jpg", "https://review.edumaker.kr/images/202610041500-a1b717/02.jpg", "https://review.edumaker.kr/images/202610041500-a1b717/03.jpg", "https://review.edumaker.kr/images/202610041500-a1b717/04.jpg"], "mainEntityOfPage": "https://review.edumaker.kr/r/202610041500-a1b717/", "inLanguage": "ko", "keywords": "아두이노교육, 피지컬코딩교육, 중학교코딩교육, 중학생아두이노, 아두이노센서, 초음파센서", "author": {"@type": "Organization", "name": "에듀메이커", "url": "https://www.edumaker.kr"}, "publisher": {"@type": "Organization", "name": "에듀메이커(EDUMAKER)", "url": "https://www.edumaker.kr"}, "isBasedOn": "https://blog.naver.com/edumaker07/224430596237"}</script>
+</head>
+<body>
+<header class="top"><div class="in"><a class="brand" href="https://review.edumaker.kr/"><b>EDUMAKER</b> 수업 후기</a>
+<nav class="nav"><a href="https://www.edumaker.kr/review">홈페이지</a><a href="https://blog.naver.com/edumaker07">블로그</a><a href="https://www.edumaker.kr/contact">교육 문의</a></nav></div></header>
+<main>
+<p class="crumb"><a href="https://review.edumaker.kr/">수업 후기</a> › <a href="https://review.edumaker.kr/#학생교육">학생교육</a></p>
+<article>
+<div class="meta"><span class="badge" style="background:#E8F5EC;color:#1F7A45">학생교육</span><time datetime="2026-10-04">2026.10.04</time></div>
+<h1>중학교 아두이노교육, 초음파센서로 잰 거리를 LCD에 띄워 보다 (서울 중학교)</h1>
+<p class="hl">중학교 1·2학년 대상 아두이노교육 · 아두이노 피지컬 코딩교육</p>
+<div class="photos"><img src="https://review.edumaker.kr/images/202610041500-a1b717/01.jpg" alt="아두이노 피지컬 교육 수업 현장 사진 1" loading="eager"><img src="https://review.edumaker.kr/images/202610041500-a1b717/02.jpg" alt="아두이노 피지컬 교육 수업 현장 사진 2" loading="lazy"><img src="https://review.edumaker.kr/images/202610041500-a1b717/03.jpg" alt="아두이노 피지컬 교육 수업 현장 사진 3" loading="lazy"><img src="https://review.edumaker.kr/images/202610041500-a1b717/04.jpg" alt="아두이노 피지컬 교육 수업 현장 사진 4" loading="lazy"></div>
+<dl class="facts"><dt>교육명</dt><dd>아두이노 피지컬 교육</dd><dt>참여 대상</dt><dd>중학교 1학년 5개 반, 2학년 5개 반</dd></dl>
+<p class="sum">오늘은 서울의 한 중학교에서 진행한 아두이노교육, 피지컬코딩 수업 현장을 소개해 드릴게요! 1학년 5개 반, 2학년 5개 반 학생들이 반마다 8차시 동안 아두이노와 센서를 직접 연결하고 코딩으로 움직이는 작품을 만들어 보았답니다. 요즘 AI가 화면 밖으로 나와 로봇과 기기를 움직이는 &#x27;AI 피지컬&#x27; 산업이 주목받고 있죠. 그만큼 소프트웨어와 하드웨어를 함께 다루는 피지컬교육이 더욱 중요해지고 있어요.</p>
+<ul class="tags"><li>#아두이노교육</li><li>#피지컬코딩교육</li><li>#중학교코딩교육</li><li>#중학생아두이노</li><li>#아두이노센서</li><li>#초음파센서</li></ul>
+<div class="btns"><a class="btn blog" href="https://blog.naver.com/edumaker07/224430596237">블로그에서 전체 후기 보기</a><a class="btn ig" href="https://www.instagram.com/p/DeEEYDgjzJ3/">인스타그램</a><a class="btn ask" href="https://www.edumaker.kr/contact">이런 교육 문의하기</a></div>
+</article>
+<p class="more"><a href="https://review.edumaker.kr/">← 에듀메이커 수업 후기 전체 보기</a></p>
+</main>
+<footer><div class="in">에듀메이커(주) EDUMAKER · 디지털·AI 교육 기획, 콘텐츠 개발, 교육 운영<br>
+배움에 진심을 담아 내일의 성장을 설계합니다. · 문의 0507-1307-8963 · info@edumaker.kr · <a href="https://www.edumaker.kr">www.edumaker.kr</a></div></footer>
+</body>
+</html>
