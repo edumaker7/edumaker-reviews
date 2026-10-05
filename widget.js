@@ -110,9 +110,9 @@
     ":host{all:initial;font-family:inherit}",
     "*{box-sizing:border-box}",
     ".bar{background:rgba(255,255,255,.97);border-bottom:1px solid #eceef1;box-shadow:0 6px 16px rgba(20,30,50,.07);font-family:inherit;color:#1f2329}",
-    ".in{max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}",
-    ".lbl{font-size:15px;font-weight:800;white-space:nowrap;letter-spacing:-.01em}",
-    ".chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}",
+    ".in{padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}",
+    ".lbl{flex:0 0 auto;font-size:15px;font-weight:800;white-space:nowrap;letter-spacing:-.01em}",
+    ".chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;min-width:0}",
     ".chips::-webkit-scrollbar{display:none}",
     ".chip{flex:0 0 auto;white-space:nowrap;font:inherit;font-size:14px;font-weight:600;border:1px solid #d9dde3;background:#fff;color:#4a5160;padding:6px 13px;border-radius:999px;cursor:pointer}",
     ".chip:hover{border-color:#1F7A45;color:#1F7A45}",
@@ -385,7 +385,16 @@
       // 필터가 화면 밖으로 올라갔고, 후기 목록이 아직 화면에 있을 때만 보이기
       var show = cr.bottom < top + 4 && fr.bottom > top + 120;
       fl.style.display = show ? "block" : "none";
-      if (show) { flH = fl.offsetHeight || flH; showActiveChip(); }
+      if (show) {
+        // 위젯 본문과 같은 위치에 맞춤: 제목은 왼쪽, 필터는 오른쪽 (처음 화면과 같은 배치)
+        var wrap = root.querySelector(".wrap");
+        var wr = (wrap || host).getBoundingClientRect();
+        var inn = flRoot.querySelector(".in");
+        inn.style.paddingLeft = Math.max(12, Math.round(wr.left)) + "px";
+        inn.style.paddingRight = Math.max(12, Math.round(window.innerWidth - wr.right)) + "px";
+        flH = fl.offsetHeight || flH;
+        showActiveChip();
+      }
     }
 
     function cardHtml(r, key) {
