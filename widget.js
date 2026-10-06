@@ -102,6 +102,12 @@
     ".facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;background:#f6f8f7;border-radius:12px;padding:14px 16px;font-size:14px;margin:0 0 16px}",
     ".facts dt{font-weight:700;color:#1F7A45;white-space:nowrap}.facts dd{margin:0;color:#3b4250}",
     ".sum{font-size:15px;color:#3b4250;margin:0 0 18px;white-space:pre-line}",
+    ".sub{font-size:15px;font-weight:800;color:#1F7A45;margin:0 0 8px}",
+    ".acts{margin:0 0 18px;padding:0 0 0 2px;list-style:none}",
+    ".acts li{position:relative;padding:3px 0 3px 18px;font-size:15px;color:#3b4250}",
+    ".acts li:before{content:'';position:absolute;left:3px;top:13px;width:6px;height:6px;border-radius:50%;background:#1F7A45}",
+    ".qt{margin:0 0 10px;padding:12px 16px;background:#f6f8f7;border-left:4px solid #1F7A45;border-radius:0 10px 10px 0;font-size:15px;color:#3b4250}",
+    ".qt:last-of-type{margin-bottom:18px}",
     ".tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 20px}",
     ".tags span{font-size:12px;color:#5b6270;background:#f1f3f5;padding:3px 9px;border-radius:999px}",
     ".btns{display:flex;gap:10px;flex-wrap:wrap}",
@@ -189,6 +195,8 @@
       (r.headline && r.headline.length ? '<p class="hl">' + esc(r.headline.join(" · ")) + "</p>" : "") +
       (facts.length ? '<dl class="facts">' + facts.map(function (f) { return "<dt>" + esc(f.k) + "</dt><dd>" + esc(f.v) + "</dd>"; }).join("") + "</dl>" : "") +
       '<p class="sum">' + esc(String(r.summary || "").replace(/([.!?])\s+(?=[^\s)])/g, "$1\n")) + "</p>" +
+      (r.activities && r.activities.length ? '<h4 class="sub">이런 활동을 했어요</h4><ul class="acts">' + r.activities.map(function (a) { return "<li>" + esc(a) + "</li>"; }).join("") + "</ul>" : "") +
+      (r.quotes && r.quotes.length ? '<h4 class="sub">현장 반응</h4>' + r.quotes.map(function (q) { return '<blockquote class="qt">“' + esc(q) + '”</blockquote>'; }).join("") : "") +
       (r.tags && r.tags.length ? '<div class="tags">' + r.tags.map(function (t) { return "<span>#" + esc(t) + "</span>"; }).join("") + "</div>" : "") +
       '<div class="btns"><a class="btn blog" target="_blank" rel="noopener" href="' + esc(blogLink(r, blogHome)) + '">블로그에서 전체 후기 보기 →</a>' +
       (r.instagram_url ? '<a class="btn ig" target="_blank" rel="noopener" href="' + esc(r.instagram_url) + '">인스타그램</a>' : "") +
