@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>https://review.edumaker.kr/</loc><lastmod>2026-10-16</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
+<url><loc>https://review.edumaker.kr/</loc><lastmod>2026-10-21</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
+<url><loc>https://review.edumaker.kr/r/202610211500-b915c2/</loc><lastmod>2026-10-21</lastmod><priority>0.8</priority></url>
 <url><loc>https://review.edumaker.kr/r/202610161500-0a04c7/</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
 <url><loc>https://review.edumaker.kr/r/202610151500-febda9/</loc><lastmod>2026-10-16</lastmod><priority>0.8</priority></url>
 <url><loc>https://review.edumaker.kr/r/202610141500-7445f8/</loc><lastmod>2026-10-14</lastmod><priority>0.8</priority></url>
