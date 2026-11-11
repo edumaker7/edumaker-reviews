@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-11 16:25",
+ "updated_at": "2026-11-11 17:25",
  "reviews": [
   {
    "id": "202611111500-a5ade4",
@@ -5420,5 +5420,6 @@
  ],
  "blog_home": "https://blog.naver.com/edumaker07",
  "site_url": "https://review.edumaker.kr",
- "contact_url": "https://www.edumaker.kr/contact"
+ "contact_url": "https://www.edumaker.kr/contact",
+ "ga_id": "G-ESVH7V8HBK"
 }
